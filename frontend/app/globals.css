@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 222 47% 11%;
+    --fg: 210 40% 98%;
+
+    --panel: 222 47% 11%;
+    --panel-fg: 210 40% 98%;
+
+    --line: 216 34% 17%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-fg: 215 20.2% 65.1%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-slate-800;
+  }
+  body {
+    @apply bg-slate-950 text-slate-200 antialiased selection:bg-sage-500/30 selection:text-sage-300;
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: theme("colors.slate.800");
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: theme("colors.slate.700");
+}
