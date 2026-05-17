@@ -1,12 +1,21 @@
-import { apiGet, apiPost } from "@/lib/api";
-import type { Activity, ActivityCreate, PaginatedData } from "@/types";
-
-const BASE = "/api/v1/activities";
+import { api } from "./index";
+import type { ApiEnvelope, PaginatedData, Activity, ActivityCreate } from "@/types";
 
 export const activitiesApi = {
-  listForOrg: (organizationId: string, params?: { type?: string; limit?: number; offset?: number }) =>
-    apiGet<PaginatedData<Activity>>(BASE, { organization_id: organizationId, ...params }),
-  listForLead: (leadId: string, organizationId: string, params?: { limit?: number; offset?: number }) =>
-    apiGet<PaginatedData<Activity>>(`${BASE}/lead/${leadId}`, { organization_id: organizationId, ...params }),
-  create: (data: ActivityCreate) => apiPost<Activity>(BASE, data),
+  list(organizationId: string, params?: { limit?: number; offset?: number }) {
+    return api.get<ApiEnvelope<PaginatedData<Activity>>>("/activities", {
+      organization_id: organizationId,
+      ...params,
+    });
+  },
+
+  getLeadActivities(leadId: string, organizationId: string) {
+    return api.get<ApiEnvelope<Activity[]>>(`/leads/${leadId}/activities`, {
+      organization_id: organizationId,
+    });
+  },
+
+  create(data: ActivityCreate) {
+    return api.post<ApiEnvelope<Activity>>("/activities", data);
+  },
 };
