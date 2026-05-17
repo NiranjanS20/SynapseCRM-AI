@@ -32,16 +32,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
 
       if (firebaseUser) {
-        // Automatically handshake with backend here or in api service
+        // Automatically handshake with backend
         try {
           const token = await firebaseUser.getIdToken();
-          await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/api/v1/auth/session`, {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/api/v1/auth/session`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             }
           });
+          if (res.ok) {
+            const body = await res.json();
+            // Set organization context from session response
+            const orgIds = body.organization_ids || [];
+            if (orgIds.length > 0) {
+              const { useOrganizationStore } = await import("@/stores/organization-store");
+              const currentOrg = useOrganizationStore.getState().currentOrgId;
+              if (!currentOrg || !orgIds.includes(currentOrg)) {
+                useOrganizationStore.getState().setCurrentOrg(orgIds[0]);
+              }
+            }
+          }
         } catch (error) {
           console.error("Backend handshake failed:", error);
         }
