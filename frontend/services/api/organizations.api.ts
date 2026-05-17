@@ -1,11 +1,36 @@
-import { apiGet, apiPost, apiPatch } from "@/lib/api";
-import type { Organization, OrganizationCreate, PaginatedData } from "@/types";
-
-const BASE = "/api/v1/organizations";
+import { api } from "./index";
+import type { ApiEnvelope, Organization, OrganizationCreate, Membership } from "@/types";
 
 export const organizationsApi = {
-  list: () => apiGet<Organization[]>(BASE),
-  get: (id: string) => apiGet<Organization>(`${BASE}/${id}`),
-  create: (data: OrganizationCreate) => apiPost<Organization>(BASE, data),
-  update: (id: string, data: Partial<OrganizationCreate>) => apiPatch<Organization>(`${BASE}/${id}`, data),
+  list() {
+    return api.get<ApiEnvelope<Organization[]>>("/organizations");
+  },
+
+  get(id: string) {
+    return api.get<ApiEnvelope<Organization>>(`/organizations/${id}`);
+  },
+
+  create(data: OrganizationCreate) {
+    return api.post<ApiEnvelope<Organization>>("/organizations", data);
+  },
+
+  update(id: string, data: Partial<OrganizationCreate>) {
+    return api.patch<ApiEnvelope<Organization>>(`/organizations/${id}`, data);
+  },
+
+  getMembers(orgId: string) {
+    return api.get<ApiEnvelope<Membership[]>>(`/organizations/${orgId}/members`);
+  },
+
+  addMember(orgId: string, email: string, role = "viewer") {
+    return api.post<ApiEnvelope<Membership>>(`/organizations/${orgId}/members`, { email, role });
+  },
+
+  updateMemberRole(orgId: string, memberId: string, role: string) {
+    return api.patch<ApiEnvelope<Membership>>(`/organizations/${orgId}/members/${memberId}`, { role });
+  },
+
+  removeMember(orgId: string, memberId: string) {
+    return api.delete<ApiEnvelope<null>>(`/organizations/${orgId}/members/${memberId}`);
+  },
 };
