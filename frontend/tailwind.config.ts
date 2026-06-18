@@ -12,24 +12,39 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // App Custom Palette
+        charcoal: {
+          navy: "#27262E", // Base dark background
+          DEFAULT: "#27262E",
+        },
+        sandy: {
+          tan: "#E19C63", // Primary action / highlight
+          DEFAULT: "#E19C63",
+        },
+        dusty: {
+          steel: "#8BA5BE", // Secondary/Muted elements
+          DEFAULT: "#8BA5BE",
+        },
+        // Mapped UI Colors referencing custom palette
         slate: {
-          900: "#0F172A",
-          800: "#111827",
-          700: "#1E293B",
+          900: "#1A1A1E",
+          800: "#27262E", // Charcoal Navy
+          700: "#34333D",
         },
         sage: {
-          500: "#7C9A92",
-          400: "#A3B8AF",
-          300: "#D6E4DD",
+          500: "#E19C63", // Sandy Tan
+          400: "#E6AE7F",
+          300: "#EBC29F",
         },
         graphite: {
-          900: "#1C1F26",
-          800: "#2A2F3A",
-          700: "#3B4252",
+          950: "#19181D",
+          900: "#27262E", // Charcoal Navy
+          800: "#32313B",
+          700: "#444352",
         },
         accent: {
           success: "#22C55E",
-          warning: "#F59E0B",
+          warning: "#E19C63", // Sandy Tan
           danger: "#EF4444",
         },
         bg: "hsl(var(--bg))",
