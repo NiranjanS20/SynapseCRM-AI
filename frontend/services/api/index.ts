@@ -1,4 +1,4 @@
-import { auth } from "@/lib/firebase";
+import { auth } from "@/lib/firebase/client";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
 
@@ -34,8 +34,9 @@ class ApiService {
       "Content-Type": "application/json",
     };
 
-    if (auth.currentUser) {
-      const token = await auth.currentUser.getIdToken();
+    const token = await auth.currentUser?.getIdToken();
+
+    if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
