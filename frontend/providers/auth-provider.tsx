@@ -1,87 +1,82 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { User, signInWithPopup, signOut as firebaseSignOut, getIdToken } from "firebase/auth";
-import { auth, googleProvider, microsoftProvider } from "@/lib/firebase";
+import { createContext, useContext, useEffect, useState } from "react";
+import { User, GoogleAuthProvider, OAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 interface AuthContextType {
   user: User | null;
+  session: any | null; // Keeping for compatibility
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithMicrosoft: () => Promise<void>;
   logout: () => Promise<void>;
-  getToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  session: null,
   loading: true,
   signInWithGoogle: async () => {},
   signInWithMicrosoft: async () => {},
   logout: async () => {},
-  getToken: async () => null,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-
-      if (firebaseUser) {
-        // Automatically handshake with backend
-        try {
-          const token = await firebaseUser.getIdToken();
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/api/v1/auth/session`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          if (res.ok) {
-            const body = await res.json();
-            // Set organization context from session response
-            const orgIds = body.organization_ids || [];
-            if (orgIds.length > 0) {
-              const { useOrganizationStore } = await import("@/stores/organization-store");
-              const currentOrg = useOrganizationStore.getState().currentOrgId;
-              if (!currentOrg || !orgIds.includes(currentOrg)) {
-                useOrganizationStore.getState().setCurrentOrg(orgIds[0]);
-              }
-            }
-          }
-        } catch (error) {
-          console.error("Backend handshake failed:", error);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      
+      if (currentUser) {
+        // Set a lightweight cookie for Next.js middleware route protection
+        // This won't perfectly validate on the edge without firebase-admin, 
+        // but it provides optimistic route guarding
+        const token = await currentUser.getIdToken();
+        Cookies.set('firebase-auth', token, { expires: 1, path: '/' });
+        setSession({ token });
+      } else {
+        Cookies.remove('firebase-auth', { path: '/' });
+        setSession(null);
+        // Do not redirect on initial load (loading is true) if unauthenticated,
+        // let the middleware or page handle initial routing.
+        if (!loading) {
+          router.push("/login");
         }
       }
+      
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router, loading]);
 
   const signInWithGoogle = async () => {
-    await signInWithPopup(auth, googleProvider);
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
   };
 
   const signInWithMicrosoft = async () => {
-    await signInWithPopup(auth, microsoftProvider);
+    const provider = new OAuthProvider('microsoft.com');
+    provider.setCustomParameters({
+      prompt: 'consent',
+      tenant: 'common',
+    });
+    await signInWithPopup(auth, provider);
   };
 
   const logout = async () => {
-    await firebaseSignOut(auth);
-  };
-
-  const getToken = async () => {
-    if (!auth.currentUser) return null;
-    return await getIdToken(auth.currentUser);
+    await signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithMicrosoft, logout, getToken }}>
+    <AuthContext.Provider value={{ user, session, loading, signInWithGoogle, signInWithMicrosoft, logout }}>
       {children}
     </AuthContext.Provider>
   );
