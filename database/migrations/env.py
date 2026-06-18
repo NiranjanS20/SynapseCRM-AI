@@ -14,6 +14,8 @@ load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 database_url = os.environ.get("DATABASE_URL") or os.environ.get("SQLALCHEMY_DATABASE_URL") or config.get_main_option("sqlalchemy.url")
 if database_url:
+    if database_url.startswith("postgresql+asyncpg://"):
+        database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
     config.set_main_option("sqlalchemy.url", database_url)
 
 
